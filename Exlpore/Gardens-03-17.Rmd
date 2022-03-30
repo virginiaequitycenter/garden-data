@@ -1,0 +1,285 @@
+---
+title: "Gardens map"
+author: "Lee LeBoeuf"
+date: "3/17/2022"
+output: 
+  html_document: 
+    toc: true
+    toc_float: true
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+
+library(tidyverse)
+library(sf)
+library(leaflet)
+library(DT)
+library(rgeos)
+
+files <- list.files("New Data", pattern = ".shp", full.names = TRUE)
+shape <- readRDS("cville_tracts.RDS")
+shape$GEOID <- as.numeric(shape$GEOID)
+shape <- st_transform(shape, crs = 4326)
+shape <- shape[which(shape$COUNTYFP == 540),]
+pop <- read_csv("acs_tract_cville.csv")
+dat <- shape %>%
+  left_join(pop, by = "GEOID")
+crha <- st_read(files[4], quiet = T)
+crha <- st_transform(crha, 4326)
+
+```
+
+
+``` {r, prepping data}
+land_search <- st_read(files[1], quiet = T)
+land_search$Address <- ifelse(is.na(land_search$Address == T), land_search$Prop_Name, land_search$Address)
+land_search <- land_search %>%
+  rename(Location = Address)
+land_search <- st_transform(land_search, 4326)
+
+cult_gard <- st_read(files[5], quiet = T)
+cult_gard <- st_transform(cult_gard, 4326)
+
+```
+
+## Notes {.tabset}
+
+* In the maps below, the potential gardens and existing gardens are mapped together (existing gardens are circles; potential gardens are polygons). Public/affordable housing is plotted in red polygons. 
+* There are popups with additional information for every layer--I included everything I could from each data file that seemed to have complete-ish information. 
+* I confirmed that the "2018-2019 Land Search Matrix" data frame lists potential new gardens, and that CRHA Owned Sites are public/affordable housing by reading through [Food Security and Urban Agriculture in Charlottesville](https://issuu.com/suhrawardy/docs/suhrawardy_urban_ag_in_cville_2020_e.r._fellowship).
+    * I am confused about the "New Data/Potential Gardens.shp" data file. I would like to include the potential garden cites as circles rather than polygons, but there's no additional information in this file explaining what each data point is. I know that the "2018-2019 Land Search Matrix" data frame lists potential new gardens, so I'm plotting them as the full polygons for now. I think that "New Data/Potential Gardens.shp" might actually be a combination of both potential new gardens and existing gardens based on reading through the food security project, but I'm not certain. I've also tried calculating the the centroids of the polygons for the potential new gardens so that they could be plotted as circles instead, but haven't been successful yet. 
+* I am also 99% certain that the parcels_to_all_join data contains the distance to each garden space (existing or potential) in feet, parcels_to_Garden_join has the same info but to existing gardens only. I've plotted it as such below but included a pop-up that shows the distance in miles. 
+* I've included a couple other examples of variables we could include in the maps in case they are of interest to cultivate. 
+* Challenges: 
+    * In overlaying multiple layers like I've done in the maps below, there are some instances where you can't click on the pop-ups for every object in the map because there is another layer over top of it--not sure if this makes any sense, try to click on the circle within the large purple shape in the first map to see what I mean. I haven't figured out a way to make every layer's pop-up accessible. 
+    * I would love to include more information about size of each garden, but that information seems to be lacking. There is a column called "P_size" in the 2018-2019 Land Search Matrix data frame that presumably shows the size of each potential garden, but I have no idea what the units are. For the existing gardens, the only size measure I see is in Acres, and most are zero. The one that isn't zero (located at 6th St and Monticello and Managed by Urban Agriculture Collective) is listed as 4400---seems unlikely?
+
+
+### Map 1 -- median household income {.tabset}
+
+* Bottom layer polygons are colored based on the median household income of each census tract--could do this with census blocks as well. 
+* Purple polygons show sites of potential gardens
+* Red polygons show public/affordable housing
+* All existing gardens are black circles; fill color of those circles is based on who manages the garden (City Schoolyard Garden or Urban Agriculture Collective)
+
+```{r}
+pal <- colorFactor(c("navy", "purple"), domain = cult_gard$Managed_by)
+
+pal2 <- colorNumeric("Blues", reverse = FALSE, domain = dat$hhincE)
+
+leaflet() %>% 
+  addPolygons(data = dat, 
+              fillColor = ~pal2(dat$hhincE),
+              weight = 1,
+              layerId = 2,
+              opacity = 1,
+              color = "white", 
+              fillOpacity = 0.6,
+              highlight = highlightOptions(
+                weight = 2,
+                fillOpacity = 0.8),
+              popup = paste0("GEOID: ", dat$GEOID, "<br>",
+                             "Median household income: ", dat$hhincE)) %>% 
+  addLegend("bottomright", pal = pal2, values = (dat$hhincE), 
+            title = "Median <br>household<br> income", opacity = 0.7) %>%
+  addProviderTiles("CartoDB.Positron") %>% 
+  addCircleMarkers(data = cult_gard,
+                   color = "black", 
+                   fillColor = ~pal(cult_gard$Managed_by),
+                   radius = 8,
+                   popup = paste0("Location: ", cult_gard$Location, "<br>",
+                                  "Managed/Owned by: ", cult_gard$Managed_by, "<br>",
+                                  "Acreage: ", cult_gard$Acreage)) %>%
+  addPolygons(data = land_search, 
+              color = "purple",
+                   popup = paste0("Location: ", land_search$Location, "<br>",
+                                  "Managed/Owned by: ", land_search$Owner, "<br>",
+                                  "Size: ", land_search$P_size, "<br>",
+                                  "Own Type: ", land_search$Own_type)) %>%
+  addPolygons(data = crha,
+              color = "red",
+              popup = paste0("Name: ", crha$Name, "<br>",
+                             "Location: ", crha$Address, "<br>",
+                             "Owner: ", crha$Owned_by, "<br>",
+                             "Acreage: ", crha$Acreage))
+```
+
+
+### Map 2 -- percent in poverty 
+
+* Bottom layer polygons are colored based on the percent of residents living in poverty for each census tract--could do this with census blocks as well. 
+* Purple polygons show sites of potential gardens
+* Red polygons show public/affordable housing
+* All existing gardens are black circles; fill color of those circles is based on who manages the garden (City Schoolyard Garden or Urban Agriculture Collective)
+
+```{r}
+pal2 <- colorNumeric("Blues", reverse = FALSE, domain = dat$povrateE)
+
+leaflet() %>% 
+  addPolygons(data = dat, 
+              fillColor = ~pal2(dat$povrateE),
+              weight = 1,
+              layerId = 2,
+              opacity = 1,
+              color = "white", 
+              fillOpacity = 0.6,
+              highlight = highlightOptions(
+                weight = 2,
+                fillOpacity = 0.8),
+              popup = paste0("GEOID: ", dat$GEOID, "<br>",
+                             "Percent in poverty: ", dat$povrateE)) %>% 
+  addLegend("bottomright", pal = pal2, values = (dat$povrateE), 
+            title = "Percent <br>living in<br> poverty", opacity = 0.7) %>%
+  addProviderTiles("CartoDB.Positron") %>% 
+  addCircleMarkers(data = cult_gard,
+                   color = "black", 
+                   fillColor = ~pal(cult_gard$Managed_by),
+                   radius = 8,
+                   popup = paste0("Location: ", cult_gard$Location, "<br>",
+                                  "Managed/Owned by: ", cult_gard$Managed_by, "<br>",
+                                  "Acreage: ", cult_gard$Acreage)) %>%
+  addPolygons(data = land_search, 
+              color = "purple",
+                   popup = paste0("Location: ", land_search$Location, "<br>",
+                                  "Managed/Owned by: ", land_search$Owner, "<br>",
+                                  "Size: ", land_search$P_size, "<br>",
+                                  "Own Type: ", land_search$Own_type)) %>%
+  addPolygons(data = crha,
+              color = "red",
+              popup = paste0("Name: ", crha$Name, "<br>",
+                             "Location: ", crha$Address, "<br>",
+                             "Owner: ", crha$Owned_by, "<br>",
+                             "Acreage: ", crha$Acreage))
+```
+
+
+### Map 3 -- total population 
+
+* Bottom layer polygons are colored based on the the total population of each census tract--could do this with census blocks as well. 
+* Purple polygons show sites of potential gardens
+* Red polygons show public/affordable housing
+* All existing gardens are black circles; fill color of those circles is based on who manages the garden (City Schoolyard Garden or Urban Agriculture Collective)
+
+```{r}
+pal2 <- colorNumeric("Blues", reverse = FALSE, domain = dat$totalpopE)
+
+leaflet() %>% 
+  addPolygons(data = dat, 
+              fillColor = ~pal2(dat$totalpopE),
+              weight = 1,
+              layerId = 2,
+              opacity = 1,
+              color = "white", 
+              fillOpacity = 0.6,
+              highlight = highlightOptions(
+                weight = 2,
+                fillOpacity = 0.8),
+              popup = paste0("GEOID: ", dat$GEOID, "<br>",
+                             "Percent in poverty: ", dat$totalpopE)) %>% 
+  addLegend("bottomright", pal = pal2, values = (dat$totalpopE), 
+            title = "Percent <br>living in<br> poverty", opacity = 0.7) %>%
+  addProviderTiles("CartoDB.Positron") %>% 
+  addCircleMarkers(data = cult_gard,
+                   color = "black", 
+                   fillColor = ~pal(cult_gard$Managed_by),
+                   radius = 8,
+                   popup = paste0("Location: ", cult_gard$Location, "<br>",
+                                  "Managed/Owned by: ", cult_gard$Managed_by, "<br>",
+                                  "Acreage: ", cult_gard$Acreage)) %>%
+  addPolygons(data = land_search, 
+              color = "purple",
+                   popup = paste0("Location: ", land_search$Location, "<br>",
+                                  "Managed/Owned by: ", land_search$Owner, "<br>",
+                                  "Size: ", land_search$P_size, "<br>",
+                                  "Own Type: ", land_search$Own_type)) %>%
+  addPolygons(data = crha,
+              color = "red",
+              popup = paste0("Name: ", crha$Name, "<br>",
+                             "Location: ", crha$Address, "<br>",
+                             "Owner: ", crha$Owned_by, "<br>",
+                             "Acreage: ", crha$Acreage))
+```
+
+### Map 4 -- distance to existing gardens only
+
+* Bottom layer polygons are colored based on the distance to a garden. Pop-ups give the distance in miles  
+* Purple polygons show sites of potential gardens
+* Red polygons show public/affordable housing
+* All existing gardens are black circles; fill color of those circles is based on who manages the garden (City Schoolyard Garden or Urban Agriculture Collective)
+
+```{r}
+parcel_gard <- st_read(files[8], quiet = T)
+parcel_gard_4326 <- st_transform(parcel_gard, 4326)
+
+pal3 <- colorNumeric("Blues", domain = parcel_gard_4326$Distance)
+
+leaflet(parcel_gard_4326) %>% 
+  addProviderTiles("CartoDB.Positron") %>% 
+  addPolygons(data = parcel_gard_4326,
+              fillColor = ~pal3(Distance),
+              weight = 1,
+              opacity = 1,
+              color = "white",
+              fillOpacity = 0.6,
+              highlight = highlightOptions(weight = 2, fillOpacity = 0.8, bringToFront = T),
+              popup = paste0("Distance in miles to nearest garden: ", round(parcel_gard_4326$Distance / 5280, 2))) %>% 
+  addPolygons(data = land_search, 
+              color = "purple",
+                   popup = paste0("Location: ", land_search$Location, "<br>",
+                                  "Managed/Owned by: ", land_search$Owner, "<br>",
+                                  "Size: ", land_search$P_size, "<br>",
+                                  "Own Type: ", land_search$Own_type)) %>%
+  addCircleMarkers(data = cult_gard,
+                   color = "black", 
+                   fillColor = ~pal(cult_gard$Managed_by),
+                   radius = 8,
+                   popup = paste0("Location: ", cult_gard$Location, "<br>",
+                                  "Managed/Owned by: ", cult_gard$Managed_by, "<br>",
+                                  "Acreage: ", cult_gard$Acreage)) 
+
+
+```
+
+
+
+### Map 5 -- distance to existing and potential gardens
+
+* Bottom layer polygons are colored based on the distance to a garden--existing or potential gardens. Pop-ups give the distance in miles  
+* Purple polygons show sites of potential gardens
+* Red polygons show public/affordable housing
+* All existing gardens are black circles; fill color of those circles is based on who manages the garden (City Schoolyard Garden or Urban Agriculture Collective)
+
+```{r}
+parcel_all <- st_read(files[9], quiet = T)
+parcel_all_4326 <- st_transform(parcel_all, 4326)
+
+pal3 <- colorNumeric("Blues", domain = parcel_all_4326$Distance)
+
+leaflet(parcel_all_4326) %>% 
+  addProviderTiles("CartoDB.Positron") %>% 
+  addPolygons(data = parcel_all_4326,
+              fillColor = ~pal3(Distance),
+              weight = 1,
+              opacity = 1,
+              color = "white",
+              fillOpacity = 0.6,
+              highlight = highlightOptions(weight = 2, fillOpacity = 0.8, bringToFront = T),
+              popup = paste0("Distance in miles to nearest garden: ", round(parcel_all_4326$Distance / 5280, 2))) %>% 
+  addPolygons(data = land_search, 
+              color = "purple",
+                   popup = paste0("Location: ", land_search$Location, "<br>",
+                                  "Managed/Owned by: ", land_search$Owner, "<br>",
+                                  "Size: ", land_search$P_size, "<br>",
+                                  "Own Type: ", land_search$Own_type)) %>%
+  addCircleMarkers(data = cult_gard,
+                   color = "black", 
+                   fillColor = ~pal(cult_gard$Managed_by),
+                   radius = 8,
+                   popup = paste0("Location: ", cult_gard$Location, "<br>",
+                                  "Managed/Owned by: ", cult_gard$Managed_by, "<br>",
+                                  "Acreage: ", cult_gard$Acreage)) 
+
+
+```

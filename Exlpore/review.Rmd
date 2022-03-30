@@ -1,0 +1,230 @@
+---
+title: "Review Cultivate Data"
+author: "Michele Claibourn"
+date: "11/16/2021"
+output: 
+  html_document: 
+    toc: true
+    toc_float: true
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+
+library(tidyverse)
+library(sf)
+library(leaflet)
+library(DT)
+
+files <- list.files("New Data", pattern = ".shp", full.names = TRUE)
+```
+
+## Cultivate Data from Taha
+Taha Suhrawardy sent the data he used and derived for the work represented in his work, [Food Security and Urban Agriculture in Charlottesville](https://issuu.com/suhrawardy/docs/suhrawardy_urban_ag_in_cville_2020_e.r._fellowship). 
+
+Included in the zipped files were 10 shapefiles as well as parcel-level data from the Charlottesville Open Data portal (I believe). Data file names included
+
+1. 2018-2019 Land Search Matrix (n=15): Taha indicated that these came to him from "Richard Morris and Team" via [this googlesheet](https://docs.google.com/spreadsheets/d/1gF611f6y0JqUlBi4TXQf0fu_EhPuxAUC/edit#gid=1554545917), and represent "viable sites to establish Cultivate gardens."
+2. Parcel_to_Garden_Join (n=13562): parcel data that includes an added measure of distance created by Taha, presumably distance to the nearest schoolyard garden? 
+    - 3_Distances_a_priori (n=13652): this appears to be a duplicate of Parcel_to_Garden_Join
+    - Join_Output (n=13562): parcel data, not clear that there's anything additional here
+3. parcels_to_all_join (n=13562): parcel data that includes an added measure of distance created by Taha, but I'm unclear what it's measuring distance to
+    - 3_distances (n=13562): this appears to be a duplicate measure of parcels_to_all_join
+4. CRHA Owned Sites (n=20): sites owned by CHRA?
+5. Cultivate Charlottesville Gardens (n=10): Cultivate Charlottesville sites?
+6. Housing_to_CC_Gardens_Join (n=20): Public housing?
+7. Potential Gardens (n=24): appears to be potential sites, no additonal information is included
+
+Below, I provide a brief table and map of the 7 data sets that contain unique information.[^1]
+
+## Data Sets
+
+### 1. 2018-2019 Land Search Matrix{.tabset}
+
+#### Map
+All polygons
+```{r}
+land_search <- st_read(files[1], quiet = T)
+land_search_4326 <- st_transform(land_search, 4326)
+
+leaflet(land_search_4326) %>% 
+  addProviderTiles("CartoDB.Positron") %>% 
+  addPolygons(data = land_search_4326,
+              popup = paste0("Name: ", land_search_4326$Prop_Name, "<br>",
+                             "Owner: ", land_search_4326$Owner, "<br>",
+                             "Own Type: ", land_search_4326$Own_type))
+
+```
+
+#### Table 
+All obs (n = 15)
+```{r}
+land_search %>% select(Prop_Name:Challenges) %>% st_drop_geometry() %>% 
+  datatable(options = list(pageLength = 5))
+```
+
+
+### 2. Parcel_to_Garden_Join{.tabset}
+
+#### Map 
+Parcel's distance
+```{r}
+parcel_gard <- st_read(files[8], quiet = T)
+parcel_gard_4326 <- st_transform(parcel_gard, 4326)
+
+pal <- colorNumeric("Blues", reverse = TRUE, domain = parcel_gard_4326$Distance)
+
+leaflet(parcel_gard_4326) %>% 
+  addProviderTiles("CartoDB.Positron") %>% 
+  addPolygons(data = parcel_gard_4326,
+              fillColor = ~pal(Distance),
+              weight = 1,
+              opacity = 1,
+              color = "white",
+              fillOpacity = 0.6,
+              highlight = highlightOptions(weight = 2, fillOpacity = 0.8, bringToFront = T))
+
+```
+
+#### Table 
+First 5 obs (n = 13562)
+```{r}
+parcel_gard %>% select(PIN, ZONE, Location:Distance) %>% 
+  head() %>% st_drop_geometry() %>% datatable()
+```
+
+
+### 3. parcels_to_all_join{.tabset}
+
+#### Map 
+Parcel's distance
+```{r}
+parcel_all <- st_read(files[9], quiet = T)
+parcel_all_4326 <- st_transform(parcel_all, 4326)
+
+pal <- colorNumeric("Blues", reverse = TRUE, domain = parcel_all_4326$Distance)
+
+leaflet(parcel_all_4326) %>% 
+  addProviderTiles("CartoDB.Positron") %>% 
+  addPolygons(data = parcel_all_4326,
+              fillColor = ~pal(Distance),
+              weight = 1,
+              opacity = 1,
+              color = "white",
+              fillOpacity = 0.6,
+              highlight = highlightOptions(weight = 2, fillOpacity = 0.8, bringToFront = T))
+
+```
+
+#### Table 
+First 5 obs (n = 13562)
+```{r}
+parcel_all %>% select(PIN, ZONE, Distance) %>% head() %>% 
+  st_drop_geometry() %>% datatable()
+```
+
+
+### 4. CRHA Owned Sites{.tabset}
+
+#### Map
+All polygons
+```{r}
+crha <- st_read(files[4], quiet = T)
+crha_4326 <- st_transform(crha, 4326)
+
+leaflet(crha_4326) %>% 
+  addProviderTiles("CartoDB.Positron") %>% 
+  addPolygons(data = crha_4326,
+              popup = paste0("Name: ", crha_4326$Name, "<br>",
+                             "Owner: ", crha_4326$Owned_by))
+
+```
+
+#### Table
+All obs (n = 20)
+```{r}
+crha %>% select(Name:Zoning, Address, Owned_by) %>% 
+  st_drop_geometry() %>% datatable(options = list(pageLength = 5))
+```
+
+
+### 5. Cultivate Charlottesville Gardens{.tabset}
+
+#### Map
+All points
+```{r}
+cult_gard <- st_read(files[5], quiet = T)
+cult_gard_4326 <- st_transform(cult_gard, 4326)
+
+pal <- colorFactor(c("navy", "orange"), domain = c("City Schoolyard Garden", "Urban Agriculture Collective"))
+
+leaflet(cult_gard_4326) %>% 
+  addProviderTiles("CartoDB.Positron") %>% 
+  addCircleMarkers(color = ~pal(Managed_by), 
+                   popup = paste0("Location: ", cult_gard_4326$Location, "<br>",
+                                  "Managed by: ", cult_gard_4326$Managed_by))
+```
+
+#### Table
+All obs (n = 10)
+```{r}
+cult_gard %>% select(Location:Acreage) %>% 
+  st_drop_geometry() %>% datatable(options = list(pageLength = 5))
+```
+
+
+### 6. Housing_to_CC_Gardens_Join{.tabset}
+
+#### Map
+All polygons
+```{r}
+hous_gard <- st_read(files[6], quiet = T)
+hous_gard_4326 <- st_transform(hous_gard, 4326)
+
+pal <- colorNumeric("Blues", reverse = TRUE, domain = hous_gard_4326$Distance)
+
+leaflet(hous_gard_4326) %>% 
+  addProviderTiles("CartoDB.Positron") %>% 
+  addPolygons(data = hous_gard_4326,
+              fillColor = ~pal(Distance),
+              weight = 1,
+              opacity = 1,
+              color = "white",
+              fillOpacity = 0.6,
+              highlight = highlightOptions(weight = 2, fillOpacity = 0.8, bringToFront = T),
+              popup = paste0("Name: ", hous_gard_4326$Name, "<br>",
+                             "Owned by: ", hous_gard_4326$Owned_by, "<br>",
+                             "Location: ", hous_gard_4326$Location, "<br>",
+                             "Managed by: ", hous_gard_4326$Managed_by))
+```
+
+#### Table
+All obs (n = 20)
+```{r}
+hous_gard %>% select(Name:Zoning, Address, Owned_by, Location, Managed_by, Distance) %>%
+  st_drop_geometry() %>% datatable(options = list(pageLength = 5))
+```
+
+
+### 7. Potential Gardens{.tabset}
+
+#### Map
+All points
+```{r}
+potent_gard <- st_read(files[10], quiet = T)
+potent_gard_4326 <- st_transform(potent_gard, 4326)
+
+leaflet(potent_gard_4326) %>% 
+  addProviderTiles("CartoDB.Positron") %>% 
+  addCircleMarkers()
+```
+
+#### Table
+All obs (n = 24) -- only includes geometry, no other identifiers or information attached.
+
+## Notes
+
+I'm imagining the polygon and point data will be more relevant than the parcel-level distance data, but we can't yet fully describe what some of these polygons and points represent.
+
+[^1]: Data from Join_Output, 3_Distances_a_priori, and 3_distances are not shown.

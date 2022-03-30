@@ -1,0 +1,75 @@
+---
+title: "Example garden map"
+author: "Lee LeBoeuf"
+date: "3/26/2022"
+output: 
+  html_document: 
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(sf)
+library(leaflet)
+library(DT)
+library(rgeos)
+
+gardendat <- readRDS("gardens_geo.RDS")
+
+files <- list.files("New Data", pattern = ".shp", full.names = TRUE)
+
+## potential new garden parcels
+land_search <- st_read(files[1], quiet = T)
+land_search$Address <- ifelse(is.na(land_search$Address == T), land_search$Prop_Name, land_search$Address)
+land_search <- land_search %>%
+  rename(Location = Address)
+land_search <- st_transform(land_search, 4326)
+
+# public housing
+crha <- st_read(files[4], quiet = T)
+crha <- st_transform(crha, 4326)
+```
+
+## Map
+
+```{r}
+
+leaflet() %>% 
+  addProviderTiles("CartoDB.Positron") %>% 
+  addCircleMarkers(data = gardendat[gardendat$Status == "Existing",], group = "Gardens",
+                   color = "green", 
+                   radius = 8,
+                   popup = paste0("Location: ", gardendat$Garden_property_name, "<br>",
+                                  "Managed/Owned by: ", gardendat$Managed_by, "<br>",
+                                  "Size: ", gardendat$Size)) %>%
+    addCircleMarkers(data = gardendat[gardendat$Status == "Lost",], group = "Lost gardens",
+                   color = "grey", 
+                   radius = 8,
+                   popup = paste0("Location: ", gardendat$Garden_property_name, "<br>",
+                                  "Managed/Owned by: ", gardendat$Managed_by, "<br>",
+                                  "Size: ", gardendat$Size)) %>%
+  addPolygons(data = land_search, group = "Potential gardens",
+              color = "purple",
+                   popup = paste0("Location: ", land_search$Location, "<br>",
+                                  "Managed/Owned by: ", land_search$Owner, "<br>",
+                                  "Size: ", land_search$P_size, "<br>",
+                                  "Own Type: ", land_search$Own_type)) %>%
+  addPolygons(data = crha, group = "Public Housing", 
+              color = "red",
+              popup = paste0("Name: ", crha$Name, "<br>",
+                             "Location: ", crha$Address, "<br>",
+                             "Owner: ", crha$Owned_by, "<br>",
+                             "Acreage: ", crha$Acreage))  %>% 
+      addLayersControl(
+        overlayGroups = c("Gardens", "Lost gardens", "Potential gardens", "Public Housing"),
+        options = layersControlOptions(collapsed = FALSE), 
+        position = "bottomright"
+      ) %>% 
+      hideGroup("Lost gardens") %>% 
+      hideGroup("Potential gardens") %>% 
+      hideGroup("Public Housing") 
+
+```
+
