@@ -1,7 +1,7 @@
 ---
 title: "Map of Charlottesville Region Gardens"
 author: "Lee LeBoeuf"
-date: "3/30/2022"
+date: "04/05/2022"
 output: 
   html_document: 
     code_folding: hide
@@ -14,8 +14,6 @@ Below is a basic example of the type of map interactive map we can make displayi
   * Taha Suhrawardy provided some of the geo-location and meta-data for many of the gardens
   * Some garden locations were geo-coded using Open Street Map
     
-We have created a [google spreadsheet](https://docs.google.com/spreadsheets/d/1b0HLvY_5OtaK-Z__lOLhjkFHSS5bmTYSQBMcumyRmRk/edit?usp=sharing) with all of the meta-data we have for each garden. 
-
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -38,28 +36,36 @@ leaflet() %>%
   addCircleMarkers(data = gardendat[gardendat$Managed_by == "IRC New Roots",],
                    group = "IRC",
                    color = "yellow", 
-                   radius = 8,
-                   popup = paste0("Location: ", gardendat$Garden_property_name, "<br>",
+                   radius = 6,
+                   fillOpacity = 1,
+                   opacity = 1, 
+                   popup = paste0("Location: ", gardendat[gardendat$Managed_by == "IRC New Roots",]$Garden_property_name, "<br>",
                                   "Managed/Owned by: ", "IRC New Roots", "<br>",
                                   "Size: ", gardendat$Size)) %>%
     addCircleMarkers(data = gardendat[gardendat$Managed_by == "Urban Agriculture Collective" & gardendat$Status == "Existing",],
                      group = "Urban Agr Collective",
                    color = "purple", 
-                   radius = 8,
-                   popup = paste0("Location: ", gardendat$Garden_property_name, "<br>",
+                   radius = 6,
+                   fillOpacity = 1,
+                   opacity = 1, 
+                   popup = paste0("Location: ", gardendat[gardendat$Managed_by == "Urban Agriculture Collective" & gardendat$Status == "Existing",]$Garden_property_name, "<br>",
                                   "Managed/Owned by: ", "Urban Agriculture Collective", "<br>",
                                   "Size: ", gardendat$Size)) %>%
       addCircleMarkers(data = gardendat[gardendat$Managed_by == "City Schoolyard Garden",],
                        group = "City Schoolyard",
                    color = "green", 
-                   radius = 8,
-                   popup = paste0("Location: ", gardendat$Garden_property_name, "<br>",
+                   radius = 6,
+                   fillOpacity = 1,
+                   opacity = 1, 
+                   popup = paste0("Location: ", gardendat[gardendat$Managed_by == "City Schoolyard Garden",]$Garden_property_name, "<br>",
                                   "Managed/Owned by: ", "City Schoolyard", "<br>",
                                   "Size: ", gardendat$Size)) %>%
     addCircleMarkers(data = gardendat[gardendat$Status == "Lost",], group = "Lost gardens",
                    color = "red", 
-                   radius = 8,
-                   popup = paste0("Location: ", gardendat$Garden_property_name, "<br>",
+                   radius = 6,
+                   fillOpacity = 1,
+                   opacity = 1, 
+                   popup = paste0("Location: ", gardendat[gardendat$Status == "Lost",]$Garden_property_name, "<br>",
                                   "Managed/Owned by: ", "Urban Agriculture Collective", "<br>",
                                   "Size: ", gardendat$Size))%>% 
       addLayersControl(
