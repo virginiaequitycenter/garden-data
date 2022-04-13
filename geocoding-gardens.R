@@ -5,7 +5,10 @@ library(sf)
 library(leaflet)
 library(DT)
 
-gardens <- read.csv("gardendata.csv")
+gardens <- read.csv("gardens_nogeo.csv")
+
+## Need to remove the columns that don't have the address--we have their geo-location from the data that Taha shared
+gardens <- gardens[-which(gardens$Address == ""),]
 
 locations_df <- geocode_OSM(
   gardens[,"Address"],
@@ -38,7 +41,7 @@ locations_df <- locations_df[,c("Address", "x", "y", "point")]
 locations_df <- st_transform(locations_df, 4326)
 
 # combining geometry data with other meta data
-gardens <- locations_df %>%
+gardens2 <- locations_df %>%
   left_join(gardens)
 
 rename_geometry <- function(g, name) {
@@ -48,7 +51,7 @@ rename_geometry <- function(g, name) {
   g
 }
 
-gardens <- rename_geometry(gardens, "geometry")
+gardens2 <- rename_geometry(gardens2, "geometry")
 
 # Reading in the other data file to combine everything 
 files <- list.files("New Data", pattern = ".shp", full.names = TRUE)
@@ -62,28 +65,23 @@ cult_gard <- st_transform(cult_gard, 4326)
 # changing the column names to be consistent and adding same columns as above
 colnames(cult_gard)[colnames(cult_gard) == "Location"] <- "Garden_property_name"
 
-gardens[(nrow(gardens) + 1):((nrow(gardens) + 1) + nrow(cult_gard) - 1), c('Garden_property_name', 'geometry')] <- cult_gard[, c('Garden_property_name', 'geometry')]
-
-gardens$Managed_by[13:22] <- cult_gard$Managed_by
+gardens2[(nrow(gardens2) + 1):((nrow(gardens2) + 1) + nrow(cult_gard) - 1), c('Garden_property_name', 'geometry')] <- cult_gard[, c('Garden_property_name', 'geometry')]
 
 # The 6th st and Monticello garden was in the data twice, so I'm getting rid of the extra 
-gardens$Managed_by[12] <- "Urban Agriculture Collective"
-gardens <- gardens[-22,]
+gardens2 <- gardens2[-26,]
 
-# Also getting rid of the spare lat and lon columns because they aren't necessary with the
+# All of the gardens with missing managed by information are managed by City Schoolyard Garden
+gardens2$Managed_by <- ifelse(is.na(gardens2$Managed_by == T), "City Schoolyard Garden", gardens2$Managed_by)
+
+# Getting rid of the spare lat and lon columns because they aren't necessary with the
 # geometry 
-gardens <- gardens[,c(1, 4:12)] 
+gardens3 <- gardens2[,c(1, 4:12)]
 
 # Coding all non-lost gardens as "existing"
-gardens$Status <- ifelse(gardens$Status == "Lost", gardens$Status, "Existing")
-gardens$Status <- ifelse(is.na(gardens$Status == T), "Existing", gardens$Status)
-
-## Coding who manages each garden based on feedback from Michael on 03-30
-gardens$Managed_by[1:5] <- "IRC New Roots"
-gardens$Managed_by[6:11] <- "Urban Agriculture Collective"
+gardens3$Status <- ifelse(is.na(gardens3$Status == T), "Existing", gardens3$Status)
 
 # Writing out data file
-write.csv(gardens, 'gardens_geo.csv', row.names = F)
-write_rds(gardens, "gardens_geo.RDS")
+write.csv(gardens3, '04-12-gardens_geo.csv', row.names = F)
+write_rds(gardens3, "04-12-gardens_geo.RDS")
 
 
