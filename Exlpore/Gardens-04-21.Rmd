@@ -1,0 +1,97 @@
+---
+title: "Map of Charlottesville Region Gardens"
+author: "Lee LeBoeuf"
+date: "04/21/2022"
+output: 
+  html_document: 
+    code_folding: hide
+---
+
+Below is a basic example of the type of map interactive map we can make displaying the city gardens in the Charlottesville region. The map shows all of the gardens for which the Equity Center has data:
+
+  * Urban Agriculture Collective and City Schoolyard gardens were identified with help from Cultivate and Richard Morris
+  * International Rescue Committee (IRC) shared the locations of their gardens with us
+  * Taha Suhrawardy provided some of the geo-location and meta-data for many of the gardens
+  * Some garden locations were geo-coded using Open Street Map
+  * Locations for some gardens were located manually by using Google Maps
+    
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(sf)
+library(leaflet)
+library(DT)
+library(rgeos)
+
+gardendat <- readRDS("../Data/04-21-gardens_geo.RDS")
+```
+
+## Map
+
+```{r}
+
+leaflet() %>% 
+  addProviderTiles("CartoDB.Positron") %>% 
+  addCircleMarkers(data = gardendat[gardendat$cat == "IRC New Roots",],
+                   group = "IRC",
+                   color = "yellow", 
+                   radius = 6,
+                   fillOpacity = 1,
+                   opacity = 1, 
+                   popup = paste0("Location: ", gardendat[gardendat$Managed_by == "IRC New Roots",]$Garden_property_name, "<br>",
+                                  "Managed by: ", "IRC New Roots", "<br>",
+                                  "Size: ", gardendat$Size)) %>%
+    addCircleMarkers(data = gardendat[gardendat$cat == "Urban Agriculture Collective" & gardendat$Status == "Existing",],
+                   group = "Urban Agr Collective",
+                   color = "purple", 
+                   radius = 6,
+                   fillOpacity = 1,
+                   opacity = 1, 
+                   popup = paste0("Location: ", gardendat[gardendat$Managed_by == "Urban Agriculture Collective" & gardendat$Status == "Existing",]$Garden_property_name, "<br>",
+                                  "Managed by: ", "Urban Agriculture Collective", "<br>",
+                                  "Size: ", gardendat$Size)) %>%
+      addCircleMarkers(data = gardendat[gardendat$cat == "City Schoolyard Garden",],
+                       group = "City Schoolyard",
+                   color = "green", 
+                   radius = 6,
+                   fillOpacity = 1,
+                   opacity = 1, 
+                   popup = paste0("Location: ", gardendat[gardendat$Managed_by == "City Schoolyard Garden",]$Garden_property_name, "<br>",
+                                  "Managed by: ", "City Schoolyard", "<br>",
+                                  "Size: ", gardendat$Size)) %>%
+    addCircleMarkers(data = gardendat[gardendat$Status == "Lost",], group = "Lost gardens",
+                   color = "red", 
+                   radius = 6,
+                   fillOpacity = 1,
+                   opacity = 1, 
+                   popup = paste0("Location: ", gardendat[gardendat$Status == "Lost",]$Garden_property_name, "<br>",
+                                  "Managed by: ", "Urban Agriculture Collective", "<br>",
+                                  "Size: ", gardendat$Size))%>% 
+  addCircleMarkers(data = gardendat[gardendat$cat == "Charlottesville Parks Department",],
+                   group = "Parks Dep.",
+                   color = "blue", 
+                   radius = 6,
+                   fillOpacity = 1,
+                   opacity = 1, 
+                   popup = paste0("Location: ", gardendat[gardendat$Managed_by == "Charlottesville Parks Department",]$Garden_property_name, "<br>",
+                                  "Managed by: ", "Charlottesville Parks Department", "<br>",
+                                  "Size: ", gardendat$Size)) %>%
+    addCircleMarkers(data = gardendat[gardendat$cat == "Other",],
+                   group = "Other",
+                   color = "gray", 
+                   radius = 6,
+                   fillOpacity = 1,
+                   opacity = 1, 
+                   popup = paste0("Location: ", gardendat[gardendat$cat == "Other",]$Garden_property_name, "<br>",
+                                  "Managed by: ", gardendat[gardendat$cat == "Other",]$Managed_by, "<br>",
+                                  "Size: ", gardendat$Size)) %>%
+      addLayersControl(
+        overlayGroups = c("IRC", "Urban Agr Collective", "City Schoolyard", "Lost gardens", "Parks Dep.", "Other"),
+        options = layersControlOptions(collapsed = FALSE), 
+        position = "bottomright"
+      )
+
+```
+
