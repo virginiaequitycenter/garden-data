@@ -42,7 +42,7 @@ leaflet() %>%
                    opacity = 1, 
                    popup = paste0("Location: ", gardendat[gardendat$Managed_by == "IRC New Roots",]$Garden_property_name, "<br>",
                                   "Managed by: ", "IRC New Roots", "<br>",
-                                  "Size: ", gardendat$Size)) %>%
+                                  "Size: ", gardendat[gardendat$Managed_by == "IRC New Roots",]$Size)) %>%
     addCircleMarkers(data = gardendat[gardendat$cat == "Urban Agriculture Collective" & gardendat$Status == "Existing",],
                    group = "Urban Agr Collective",
                    color = "purple", 
@@ -51,7 +51,7 @@ leaflet() %>%
                    opacity = 1, 
                    popup = paste0("Location: ", gardendat[gardendat$Managed_by == "Urban Agriculture Collective" & gardendat$Status == "Existing",]$Garden_property_name, "<br>",
                                   "Managed by: ", "Urban Agriculture Collective", "<br>",
-                                  "Size: ", gardendat$Size)) %>%
+                                  "Size: ", gardendat[gardendat$cat == "Urban Agriculture Collective" & gardendat$Status == "Existing",]$Size)) %>%
       addCircleMarkers(data = gardendat[gardendat$cat == "City Schoolyard Garden",],
                        group = "City Schoolyard",
                    color = "green", 
@@ -60,7 +60,7 @@ leaflet() %>%
                    opacity = 1, 
                    popup = paste0("Location: ", gardendat[gardendat$Managed_by == "City Schoolyard Garden",]$Garden_property_name, "<br>",
                                   "Managed by: ", "City Schoolyard", "<br>",
-                                  "Size: ", gardendat$Size)) %>%
+                                  "Size: ", gardendat[gardendat$cat == "City Schoolyard Garden",]$Size)) %>%
     addCircleMarkers(data = gardendat[gardendat$Status == "Lost",], group = "Lost gardens",
                    color = "red", 
                    radius = 6,
@@ -68,7 +68,7 @@ leaflet() %>%
                    opacity = 1, 
                    popup = paste0("Location: ", gardendat[gardendat$Status == "Lost",]$Garden_property_name, "<br>",
                                   "Managed by: ", "Urban Agriculture Collective", "<br>",
-                                  "Size: ", gardendat$Size))%>% 
+                                  "Size: ", gardendat[gardendat$Status == "Lost",]$Size))%>% 
   addCircleMarkers(data = gardendat[gardendat$cat == "Charlottesville Parks Department",],
                    group = "Parks Dep.",
                    color = "blue", 
@@ -77,7 +77,7 @@ leaflet() %>%
                    opacity = 1, 
                    popup = paste0("Location: ", gardendat[gardendat$Managed_by == "Charlottesville Parks Department",]$Garden_property_name, "<br>",
                                   "Managed by: ", "Charlottesville Parks Department", "<br>",
-                                  "Size: ", gardendat$Size)) %>%
+                                  "Size: ", gardendat[gardendat$cat == "Charlottesville Parks Department",]$Size)) %>%
     addCircleMarkers(data = gardendat[gardendat$cat == "Other",],
                    group = "Other",
                    color = "gray", 
@@ -86,7 +86,7 @@ leaflet() %>%
                    opacity = 1, 
                    popup = paste0("Location: ", gardendat[gardendat$cat == "Other",]$Garden_property_name, "<br>",
                                   "Managed by: ", gardendat[gardendat$cat == "Other",]$Managed_by, "<br>",
-                                  "Size: ", gardendat$Size)) %>%
+                                  "Size: ", gardendat[gardendat$cat == "Other",]$Size)) %>%
       addLayersControl(
         overlayGroups = c("IRC", "Urban Agr Collective", "City Schoolyard", "Lost gardens", "Parks Dep.", "Other"),
         options = layersControlOptions(collapsed = FALSE), 
