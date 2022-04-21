@@ -58,6 +58,9 @@ gardens$cat <- ifelse(gardens$Managed_by == "IRC New Roots" |
                         gardens$Managed_by == "City Schoolyard Garden",
                       gardens$Managed_by, "Other")
 
+# Making missing values NA's
+gardens$Size <- ifelse(gardens$Size == "", NA, gardens$Size)
+
 # Saving data with updated geolocations 
 write.csv(gardens, '04-21-gardens_geo.csv', row.names = F)
 write_rds(gardens, "04-21-gardens_geo.RDS")
