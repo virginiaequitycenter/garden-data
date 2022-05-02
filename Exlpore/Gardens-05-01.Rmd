@@ -236,7 +236,7 @@ leaflet()%>%
 
 ### Poverty rate
 
-The percent of individuals in poverty is determined by comparing a family's total income to an income threshold that varies by family size and composition. For example, in 2018, the poverty threshold for a family with two adults and two children was $25,465. If a family's income is less than the family's poverty threshold, then every member of that family is designated as an individual living in poverty. 
+The percent of individuals in poverty is determined by comparing a family's total income to an income threshold that varies by family size and composition. For example, in 2018, the poverty threshold for a family with two adults and two children was $25,465. If a family's income is less than the family's poverty threshold, then every member of that family is designated as an individual living in poverty. The perccent of individuals in poverty is only available at the census tract level. 
 
 ```{r}
 pal <- colorNumeric("Greys", domain = tract$povrateE)
@@ -330,7 +330,7 @@ leaflet()%>%
 
 ### Foreign-born residents
 
-The American Community Survey measures the number of foreign born residents at the individual level. Here we show the estimated percent of foreign-born residents--calculated by dividing the number of foreign-born residents by the total population.The number of foreign-born residents is only available at the census tract level. 
+The American Community Survey measures the number of foreign-born residents at the individual level. Here we show the estimated percent of foreign-born residents--calculated by dividing the number of foreign-born residents by the total population. The number of foreign-born residents is only available at the census tract level. 
 
 ```{r}
 pal <- colorNumeric("Greys", domain = tract$perc_forbE)
