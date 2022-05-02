@@ -1,5 +1,5 @@
 ---
-title: "Map of Charlottesville Region Gardens"
+title: "Charlottesville Region Gardens"
 author: "Lee LeBoeuf"
 date: "05/01/2022"
 output: 
@@ -7,11 +7,11 @@ output:
     code_folding: hide
 ---
 
-The maps below show the locations of garden sites in the greater Charlottesville region overlayed with demographic information. In each map, census tracts or block groups are colored on a gradient based on the relevant demographic variable. Gardens managed by IRC, Urban Agriculture Collective, City Schoolyard, The Charlottesville Parks Department, and other community members are shown as color-coded dots. Sites that were formerly gardens, but that have been lost, are also shown. 
+The maps below show the locations of garden sites in the Charlottesville region overlayed with demographic information. In each map, census tracts or block groups are colored on a gradient based on the relevant demographic variable. Gardens managed by IRC, Urban Agriculture Collective, City Schoolyard, The Charlottesville Parks Department, and other community members are shown as color-coded dots. Sites that were formerly gardens, but that have been lost, are also shown. 
 
-Demographic information is shown at either the census tract or block group level, depending on availability of data. All demographic data was pulled from The American Community Survey data from the U.S. Census. 
+Demographic information is shown at either the census tract or block group level, depending on availability of data. All demographic data was pulled from the 2019 American Community Survey data by the U.S. Census. 
 
-Click on the different tabs below to see each of the maps with different demographic information. Zoom in or out on the map to see more detail. Scroll over the icon above the legend in the lower right to control which gardens are displayed by selecting or de-selecting the corresponding check box. 
+Click on the different tabs below to see each of the maps with different demographic information. Zoom in or out on the map to see more detail, and click on garden sites for more information about the garden. Scroll over the icon above the legend in the lower right of the map to control which gardens are displayed by selecting or de-selecting the corresponding check box in the pop-up. 
 
 
 ```{r setup, include=FALSE}
@@ -47,7 +47,7 @@ meta <- read_sheet("https://docs.google.com/spreadsheets/d/1nqm3DuVXD1ObbVe_deac
 
 ### SNAP recipients {.tabset}
 
-The American Community Survey measures income at the household level, based on households that received public assistance income/food stamps/SNAP in the past 12 months. Here we show the estimated percent of households that receive SNAP benefits; calculated by dividing the number of household that receive SNAP by the total number of households.
+The American Community Survey measures income at the household level, based on households that received public assistance income/food stamps/SNAP in the past 12 months. Here we show the estimated percent of households that receive SNAP benefits--calculated by dividing the number of households that receive SNAP by the total number of households.
 
 ```{r}
 pal <- colorNumeric("Greys", domain = blkgr$perc_snaphseE)
@@ -142,7 +142,7 @@ leaflet()%>%
 
 ### Household income
 
-The American Community Survey measures income at the household level, capturing income in the last 12 months of all individuals 15 and older in the household. The median household income is the income threshold that divides households into two halves -- with half of the households below the value and half of the households above the value. 
+The American Community Survey measures income at the household level, capturing income in the last 12 months of all individuals 15 and older in the household. The median household income is the income threshold that divides households into two halves (half of the households fall below the value and half of the households fall above the value.)
 
 ```{r}
 pal <- colorNumeric("Greys", domain = blkgr$hhincE)
@@ -239,7 +239,7 @@ leaflet()%>%
 The percent of individuals in poverty is determined by comparing a family's total income to an income threshold that varies by family size and composition. For example, in 2018, the poverty threshold for a family with two adults and two children was $25,465. If a family's income is less than the family's poverty threshold, then every member of that family is designated as an individual living in poverty. 
 
 ```{r}
-pal <- colorNumeric("Greys", domain = blkgr$povrateE)
+pal <- colorNumeric("Greys", domain = tract$povrateE)
 leaflet()%>%
   addMapPane(name = "polygons", zIndex = 410) %>% 
   addMapPane(name = "IRC", zIndex = 420) %>%
@@ -249,7 +249,7 @@ leaflet()%>%
   addMapPane(name = "Parks Dep.", zIndex = 420) %>%
   addMapPane(name = "Other", zIndex = 420) %>%
   addProviderTiles("CartoDB.Positron") %>%
-  addPolygons(data = blkgr,
+  addPolygons(data = tract,
               fillColor = ~pal(povrateE),
               weight = 1,
               opacity = 1,
@@ -259,9 +259,9 @@ leaflet()%>%
               highlight = highlightOptions(
                 weight = 2,
                 fillOpacity = 0.8),
-              popup = paste0("GEOID: ", blkgr$GEOID, "<br>",
-                             "Poverty rate: ", blkgr$povrateE))%>% 
-  addLegend("bottomright", pal = pal, values = blkgr$povrateE, 
+              popup = paste0("GEOID: ", tract$GEOID, "<br>",
+                             "Poverty rate: ", tract$povrateE))%>% 
+  addLegend("bottomright", pal = pal, values = tract$povrateE, 
             title = "Poverty rate", opacity = 0.7) %>%
   addCircleMarkers(data = gardendat[gardendat$cat == "IRC New Roots",],
                    group = "IRC",
@@ -330,7 +330,7 @@ leaflet()%>%
 
 ### Foreign-born residents
 
-The American Community Survey measures the number of foreign born residents at the individual level. Here we show the estimated percent of foreign-born residents; calculated by dividing the number of foreign-born residents by the total population.
+The American Community Survey measures the number of foreign born residents at the individual level. Here we show the estimated percent of foreign-born residents--calculated by dividing the number of foreign-born residents by the total population.The number of foreign-born residents is only available at the census tract level. 
 
 ```{r}
 pal <- colorNumeric("Greys", domain = tract$perc_forbE)
