@@ -31,6 +31,8 @@ gardens$Total_size[which(gardens$Garden_property_name == "Burnley-Moran Elementa
 gardens$Total_size[which(gardens$Garden_property_name == "Greenbrier Elementary School")] <- "2,950 sq ft"
 gardens$Total_size[which(gardens$Managed_by == "Bread and Roses")] <- "650 sq ft"
 
+gardens$Total_size[which(gardens$Garden_property_name == "Visible records garden")] <- "2000 sq ft"
+
 # Saving data with updated geolocations 
 write.csv(gardens, '05-03-gardens_geo.csv', row.names = F)
 write_rds(gardens, "05-03-gardens_geo.RDS")
