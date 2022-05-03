@@ -5,6 +5,38 @@ library(sf)
 library(leaflet)
 library(DT)
 
+## This chunk of code makes revisions to the data file "04-21-gardens_geo.RDS"
+# The revisions are based on getting size information for the city schoolyard 
+# gardens on 5/03 and from Bread and Roses on 5/02
+
+gardens <- readRDS("04-21-gardens_geo.RDS")
+
+# Manually adding size information for the following gardens:
+# Buford = 4,560 ft2
+# Johnson = 2,426 ft2
+# Jackson-Via = 3,088 ft2
+# Clark = 3,142 ft2
+# Venable = 1,395 ft2
+# Burnley-Moran = 6,822 ft2
+# Greenbrier = 2,950 ft2
+# Bread and Roses = 650 square feet
+
+gardens$Total_size[which(gardens$Garden_property_name == "Buford Middle School")] <- "4,560 sq ft"
+gardens$Total_size[which(gardens$Garden_property_name == "Johnson Elementary School")] <- "2,426 sq ft"
+gardens$Total_size[which(gardens$Garden_property_name == "Jackson Via Elementary School")] <- "3,088 sq ft"
+gardens$Total_size[which(gardens$Garden_property_name == "Clark Elementary School")] <- "3,142 sq ft"
+gardens$Total_size[which(gardens$Garden_property_name == "Venable Elementary School")] <- "1,395 sq ft"
+gardens$Total_size[which(gardens$Garden_property_name == "Burnley-Moran Elementary School")] <- "6,822 sq ft"
+gardens$Total_size[which(gardens$Garden_property_name == "Burnley-Moran Elementary School")] <- "6,822 sq ft"
+gardens$Total_size[which(gardens$Garden_property_name == "Greenbrier Elementary School")] <- "2,950 sq ft"
+gardens$Total_size[which(gardens$Managed_by == "Bread and Roses")] <- "650 sq ft"
+
+# Saving data with updated geolocations 
+write.csv(gardens, '05-03-gardens_geo.csv', row.names = F)
+write_rds(gardens, "05-03-gardens_geo.RDS")
+
+##########################################################################################################################
+
 ## This chunk of code makes revisions to the data file "04-12-gardens_geo.RDS"
 # which was created with code below. The revisions are based on feedback from 
 # Richard Morris at Cultivate on 4/14
