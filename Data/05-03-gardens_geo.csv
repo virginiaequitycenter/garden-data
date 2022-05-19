@@ -1,26 +1,26 @@
-"Address","Garden_property_name","Location_description","Managed_by","Total_size","Plots","Size","Annual_Rent","Status","geometry","cat"
-"410 Old Lynchburg Road, Charlottesville VA 22903","New Roots Farm & Community Gardens","410 Old Lynchburg Road, Charlottesville VA 22903","IRC New Roots","3 acres",59,"400 - 3000 sq ft","$25-$200+","Existing",c(-78.5178678321813, 38.0124930690205),"IRC New Roots"
-"Almere Ave, Charlottesville, VA 22902","The Haven Community Garden","Corner of Almere Ave. and Burnet St, next to Oakwood Cemetery, Charlottesville VA 22902","IRC New Roots","6,000 sq ft",3,"2000 sq ft","varies","Existing",c(-78.486894, 38.024983),"IRC New Roots"
-"5th St SW, Charlottesville, VA 22902","5th Street Community Garden","5th Street SW, between Berring St. and Brookwood Drive, Charlottesville VA 22902","IRC New Roots","11500sq ft",20,"450 sq ft","$25","Existing",c(-78.489332, 38.025525),"IRC New Roots"
-"221 4th St SW, Charlottesville VA 22903","4th Street Community Garden","221 4th St SW, Charlottesville VA 22903","IRC New Roots","1500 sq ft",5,"180 sq ft","$25","Existing",c(-78.4873090541079, 38.0295948943577),"IRC New Roots"
-"5290 Bellair Farm, Charlottesville VA 22902","New Roots Garden at Bellair Farm","5290 Bellair Farm, Charlottesville, VA 22902","IRC New Roots","1/2 acre",8,"varies","","Existing",c(-78.5187920598439, 37.8918145524197),"IRC New Roots"
-"1740 Broadway St, Charlottesville, VA 22902","Visible records garden","behind Decipher Brewing","Kendall King","2000 sq ft",NA,"2000 sq ft","","Existing",c(-78.4591831357273, 38.0210740885381),"Other"
-"1118 Preston Ave, Charlottesville, VA 22903","Trinity Episcopal Church Bread and Roses program","Trinity Episcopal Church","Bread and Roses","650 sq ft",NA,NA,"","Existing",c(-78.4929479807631, 38.0444799897236),"Other"
-"848 West St, Charlottesville, VA 22903","West St","","Urban Agriculture Collective","9000 sq ft",NA,"9000 sq ft","","Existing",c(-78.4892914100909, 38.0361665118578),"Urban Agriculture Collective"
-"1000 Rio Rd E, Charlottesville, VA 22901","CATEC School","","Urban Agriculture Collective","10000 sq ft",NA,"10000 sq ft","","Existing",c(-78.4648207594126, 38.0622440349044),"Urban Agriculture Collective"
-"418 Garrett St, Charlottesville, VA 22902","Friendship Court","","Urban Agriculture Collective","15000 sq ft",NA,"15000 sq ft","","Lost",c(-78.4806728292768, 38.0257983618936),"Urban Agriculture Collective"
-"1000 1st St South, Charlottesville, VA 22902","South 1st St","","Urban Agriculture Collective","8000 sq ft",NA,"8000 sq ft","","Lost",c(-78.4869040341955, 38.0191605472056),"Urban Agriculture Collective"
-"707 6th St SE, Charlottesville, VA 22902","6th Street","6th St and Monticello Ave.","Urban Agriculture Collective","4400 sq ft",NA,"4400 sq ft","","Existing",c(-78.4811596743091, 38.0252002891052),"Urban Agriculture Collective"
-"304 Old Lynchburg Rd, Charlottesville, VA 22902","Azalea Park Garden","","Charlottesville Parks Department","",NA,NA,"","Existing",c(-78.5138139458892, 38.0102374904557),"Charlottesville Parks Department"
-"2030 Morton Dr, Charlottesville, VA 22903","Meadow Creek Garden","","Charlottesville Parks Department","",NA,NA,"","Existing",c(-78.4933377546812, 38.0567399241642),"Charlottesville Parks Department"
-"2000 Michie Dr, Charlottesville, VA 22901","Michie Drive","","Charlottesville Parks Department","",NA,NA,"","Existing",c(-78.4870027017086, 38.0594841161756),"Charlottesville Parks Department"
-"926 Rives St, Charlottesville, VA 22902","Rives Park ","","Charlottesville Parks Department","",NA,NA,"","Existing",c(-78.4708810490557, 38.0174065047813),"Charlottesville Parks Department"
-NA,"Buford Middle School",NA,"City Schoolyard Garden","4,560 sq ft",NA,NA,NA,"Existing",c(-78.4980957442798, 38.0261284606084),"City Schoolyard Garden"
-NA,"Burnley-Moran Elementary School",NA,"City Schoolyard Garden","6,822 sq ft",NA,NA,NA,"Existing",c(-78.4618908277615, 38.0356916434353),"City Schoolyard Garden"
-NA,"Charlottesville High School",NA,"City Schoolyard Garden",NA,NA,NA,NA,"Existing",c(-78.475907994607, 38.0515423731651),"City Schoolyard Garden"
-NA,"City of Promise",NA,"City Schoolyard Garden",NA,NA,NA,NA,"Existing",c(-78.4897866753449, 38.0335916526349),"City Schoolyard Garden"
-NA,"Clark Elementary School",NA,"City Schoolyard Garden","3,142 sq ft",NA,NA,NA,"Existing",c(-78.4739973602156, 38.0222127718751),"City Schoolyard Garden"
-NA,"Greenbrier Elementary School",NA,"City Schoolyard Garden","2,950 sq ft",NA,NA,NA,"Existing",c(-78.4701709609199, 38.0629551506723),"City Schoolyard Garden"
-NA,"Jackson Via Elementary School",NA,"City Schoolyard Garden","3,088 sq ft",NA,NA,NA,"Existing",c(-78.5049469674158, 38.0138543972329),"City Schoolyard Garden"
-NA,"Johnson Elementary School",NA,"City Schoolyard Garden","2,426 sq ft",NA,NA,NA,"Existing",c(-78.505288361924, 38.0217503346244),"City Schoolyard Garden"
-NA,"Venable Elementary School",NA,"City Schoolyard Garden","1,395 sq ft",NA,NA,NA,"Existing",c(-78.4958404262734, 38.0381270861862),"City Schoolyard Garden"
+Address,Garden_property_name,Location_description,Managed_by,Total_size,Plots,Size,Annual_Rent,Status,geometry,cat,
+"410 Old Lynchburg Road, Charlottesville VA 22903",New Roots Farm & Community Gardens,"410 Old Lynchburg Road, Charlottesville VA 22903",IRC New Roots,3 acres,59,400 - 3000 sq ft,$25-$200+,Existing,c(-78.5178678321813, 38.0124930690205),IRC New Roots
+"Almere Ave, Charlottesville, VA 22902",The Haven Community Garden,"Corner of Almere Ave. and Burnet St, next to Oakwood Cemetery, Charlottesville VA 22902",IRC New Roots,"6,000 sq ft",3,2000 sq ft,varies,Existing,c(-78.486894, 38.024983),IRC New Roots
+"5th St SW, Charlottesville, VA 22902",5th Street Community Garden,"5th Street SW, between Berring St. and Brookwood Drive, Charlottesville VA 22902",IRC New Roots,11500sq ft,20,450 sq ft,$25 ,Existing,c(-78.489332, 38.025525),IRC New Roots
+"221 4th St SW, Charlottesville VA 22903",4th Street Community Garden,"221 4th St SW, Charlottesville VA 22903",IRC New Roots,1500 sq ft,5,180 sq ft,$25 ,Existing,c(-78.4873090541079, 38.0295948943577),IRC New Roots
+"5290 Bellair Farm, Charlottesville VA 22902",New Roots Garden at Bellair Farm,"5290 Bellair Farm, Charlottesville, VA 22902",IRC New Roots,1/2 acre,8,varies,,Existing,c(-78.5187920598439, 37.8918145524197),IRC New Roots
+"1740 Broadway St, Charlottesville, VA 22902",Visible records garden,behind Decipher Brewing,Kendall King,2000 sq ft,NA,2000 sq ft,,Existing,c(-78.4591831357273, 38.0210740885381),Other
+"1118 Preston Ave, Charlottesville, VA 22903",Trinity Episcopal Church Bread and Roses program,Trinity Episcopal Church,Bread and Roses,650 sq ft,NA,NA,,Existing,c(-78.4929479807631, 38.0444799897236),Other
+"848 West St, Charlottesville, VA 22903",West St,,Urban Agriculture Collective,9000 sq ft,NA,9000 sq ft,,Existing,c(-78.4892914100909, 38.0361665118578),Urban Agriculture Collective
+"1000 Rio Rd E, Charlottesville, VA 22901",CATEC School,,Urban Agriculture Collective,10000 sq ft,NA,10000 sq ft,,Existing,c(-78.4648207594126, 38.0622440349044),Urban Agriculture Collective
+"418 Garrett St, Charlottesville, VA 22902",Friendship Court,,Urban Agriculture Collective,15000 sq ft,NA,15000 sq ft,,Lost,c(-78.4806728292768, 38.0257983618936),Urban Agriculture Collective
+"1000 1st St South, Charlottesville, VA 22902",South 1st St,,Urban Agriculture Collective,8000 sq ft,NA,8000 sq ft,,Lost,c(-78.4869040341955, 38.0191605472056),Urban Agriculture Collective
+"707 6th St SE, Charlottesville, VA 22902",6th Street,6th St and Monticello Ave.,Urban Agriculture Collective,4400 sq ft,NA,4400 sq ft,,Existing,c(-78.4811596743091, 38.0252002891052),Urban Agriculture Collective
+"304 Old Lynchburg Rd, Charlottesville, VA 22902",Azalea Park Garden,,Charlottesville Parks Department,,NA,NA,,Existing,c(-78.5138139458892, 38.0102374904557),Charlottesville Parks Department
+"2030 Morton Dr, Charlottesville, VA 22903",Meadow Creek Garden,,Charlottesville Parks Department,,NA,NA,,Existing,c(-78.4933377546812, 38.0567399241642),Charlottesville Parks Department
+"2000 Michie Dr, Charlottesville, VA 22901",Michie Drive,,Charlottesville Parks Department,,NA,NA,,Existing,c(-78.4870027017086, 38.0594841161756),Charlottesville Parks Department
+"926 Rives St, Charlottesville, VA 22902",Rives Park ,,Charlottesville Parks Department,,NA,NA,,Existing,c(-78.4708810490557, 38.0174065047813),Charlottesville Parks Department
+NA,Buford Middle School,NA,City Schoolyard Garden,"4,560 sq ft",NA,NA,NA,Existing,c(-78.4980957442798, 38.0261284606084),City Schoolyard Garden
+NA,Burnley-Moran Elementary School,NA,City Schoolyard Garden,"6,822 sq ft",NA,NA,NA,Existing,c(-78.4618908277615, 38.0356916434353),City Schoolyard Garden
+NA,Charlottesville High School,NA,City Schoolyard Garden,NA,NA,NA,NA,Existing,c(-78.475907994607, 38.0515423731651),City Schoolyard Garden
+NA,City of Promise,NA,City Schoolyard Garden,NA,NA,NA,NA,Existing,c(-78.4897866753449, 38.0335916526349),City Schoolyard Garden
+NA,Clark Elementary School,NA,City Schoolyard Garden,"3,142 sq ft",NA,NA,NA,Existing,c(-78.4739973602156, 38.0222127718751),City Schoolyard Garden
+NA,Greenbrier Elementary School,NA,City Schoolyard Garden,"2,950 sq ft",NA,NA,NA,Existing,c(-78.4701709609199, 38.0629551506723),City Schoolyard Garden
+NA,Jackson Via Elementary School,NA,City Schoolyard Garden,"3,088 sq ft",NA,NA,NA,Existing,c(-78.5049469674158, 38.0138543972329),City Schoolyard Garden
+NA,Johnson Elementary School,NA,City Schoolyard Garden,"2,426 sq ft",NA,NA,NA,Existing,c(-78.505288361924, 38.0217503346244),City Schoolyard Garden
+NA,Venable Elementary School,NA,City Schoolyard Garden,"1,395 sq ft",NA,NA,NA,Existing,c(-78.4958404262734, 38.0381270861862),City Schoolyard Garden

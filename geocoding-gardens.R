@@ -5,6 +5,30 @@ library(sf)
 library(leaflet)
 library(DT)
 
+
+## This chunk of code makes revisions to the data file "05-03-gardens_geo.RDS"
+# The revisions are based on getting size information for:
+# Charlottesville High School garden size (18,125 sq ft) -- shared by Peter Davis on 05/04
+# Adding the Incarnation Church garden (1465 Incarnation Dr, Charlottesville, VA 22901; 768 sq ft) 
+# -- lat and long = 38.073642, -78.475514 -- shared by Muriel Grim on 05/12
+
+gardens <- readRDS("05-03-gardens_geo.RDS")
+
+gardens <- gardens %>%
+  add_row(Address = "1465 Incarnation Dr, Charlottesville VA 22901", Garden_property_name = "Incarnation Church",
+          Managed_by = "Incarnation Church", Total_size = "768 sq ft", Size = "768 sq ft", 
+          Status = "Existing", cat = "Other")
+
+gardens$geometry[which(gardens$Garden_property_name == "Incarnation Church")] <- st_point(c(-78.475514, 38.073642))
+
+gardens$Total_size[which(gardens$Garden_property_name == "Charlottesville High School")] <- "18,125 sq ft"
+
+# Saving data with updates 
+write.csv(gardens, '05-19-gardens_geo.csv', row.names = F)
+write_rds(gardens, "05-19-gardens_geo.RDS")
+
+##########################################################################################################################
+
 ## This chunk of code makes revisions to the data file "04-21-gardens_geo.RDS"
 # The revisions are based on getting size information for the city schoolyard 
 # gardens on 5/03 and from Bread and Roses on 5/02
