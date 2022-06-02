@@ -1,0 +1,486 @@
+---
+title: "Charlottesville Region Gardens"
+author: "Lee LeBoeuf, Michele Claibourn, and Michael Salgueiro"
+date: "06/01/2022"
+output: 
+  html_document: 
+    code_folding: hide
+---
+
+## Garden Maps {.tabset}
+
+The maps below show the locations of garden sites in the Charlottesville region overlayed with demographic information. In each map, census tracts or block groups are colored on a gradient based on the relevant demographic variable. Gardens managed by IRC, Urban Agriculture Collective, City Schoolyard, The Charlottesville Parks Department, and other community members are shown as color-coded dots. Sites that were formerly gardens, but that have been lost, are also shown. 
+
+Demographic information is shown at either the census tract or block group level, depending on availability of data. All demographic data was pulled from the 2019 American Community Survey data by the U.S. Census. 
+
+Click on the different tabs below to see each of the maps with different demographic information. Zoom in or out on the map to see more detail, and click on garden sites for more information about the garden. Scroll over the icon above the legend in the lower right of the map to control which gardens are displayed by selecting or de-selecting the corresponding check box in the pop-up. 
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(sf)
+library(leaflet)
+library(DT)
+library(rgeos)
+library(googlesheets4)
+library(sp)
+
+# reading in garden data:
+gardendat <- readRDS("../Data/05-19-gardens_geo.RDS")
+
+# Block groups
+blkgrshape <- readRDS("../Data/cville_blkgps.RDS")
+blkgrshape$tract <- paste0(blkgrshape$STATEFP, blkgrshape$COUNTYFP, blkgrshape$TRACTCE)
+
+blkgrpop <- read_csv("../Data/acs_blkgr_cville.csv") %>%
+  mutate(GEOID = as.character(GEOID))
+blkgr <- blkgrshape %>%
+  left_join(blkgrpop, by = "GEOID")
+blkgr <- blkgr[c(blkgr$COUNTYFP == "540" | blkgr$COUNTYFP == "003"),]
+blkgr <- st_transform(blkgr, crs = 4326)
+
+# Tracts
+tractpop <- read_csv("../Data/acs_cville_tract.csv") %>%
+  mutate(GEOID = as.character(GEOID))
+tractshape <- readRDS("../Data/cville_tracts.RDS") %>%
+  mutate(GEOID = as.character(GEOID))
+tract <- tractshape %>%
+  left_join(tractpop, by = "GEOID")
+tract <- tract[c(tract$COUNTYFP == "540" | tract$COUNTYFP == "003"),]
+tract <- st_transform(tract, crs = 4326)
+
+# reading in meta data
+meta <- read_sheet("https://docs.google.com/spreadsheets/d/1nqm3DuVXD1ObbVe_deacvT7uSLdBXfQJo3mkbqDwrVo/edit?usp=sharing", sheet = "acs", gs4_deauth())
+
+## specifying Charlottesville city for county line
+cville <- aggregate(blkgr[, "COUNTYFP"], by = list(ID = blkgr$COUNTYFP), 
+                    FUN = unique, dissolve = T)
+
+```
+
+### SNAP recipients {.tabset}
+
+The American Community Survey measures income at the household level, based on households that received public assistance income/food stamps/SNAP in the past 12 months. Here we show the estimated percent of households that receive SNAP benefits--calculated by dividing the number of households that receive SNAP by the total number of households.
+
+```{r}
+# Points for legend 
+
+Points<-data.frame(x=runif(1:6),
+                   var = c(1, 2, 3, 4, 5, 6))
+
+Points <- Points %>% 
+  mutate(Category = case_when(var == 1 ~ "IRC", 
+                              var == 2 ~ "UAC",
+                              var == 3 ~ "CS",
+                              var == 4 ~ "CPD",
+                              var == 5 ~ "Oth",
+                              var == 6 ~ "Lost",
+                              TRUE ~ "C"),
+         color = case_when(Category == "IRC" ~ "yellow",
+                           Category == "UAC" ~ "orange",
+                           Category == "CS" ~ "purple",
+                           Category == "CPD" ~ "blue",
+                           Category == "Oth" ~ "grey",
+                           Category == "Lost" ~ "red",
+                           TRUE ~ "black"))
+
+map = leaflet() %>% 
+  addTiles()
+
+addLegendCustom <- function(map, colors, labels, sizes, opacity = 0.75){
+  colorAdditions <- paste0(colors, "; border-radius: 50%; width:", sizes, "px; height:", sizes, "px")
+  labelAdditions <- paste0("<div style='display: inline-block;height: ", 
+                           sizes, "px;margin-top: 4px;line-height: ", sizes, "px;'>", 
+                           labels, "</div>")
+
+  return(addLegend(map, colors = colorAdditions, 
+                   labels = labelAdditions, opacity = opacity))
+}
+
+```
+
+```{r}
+pal <- colorNumeric("Greys", domain = blkgr$perc_snaphseE)
+leaflet()%>%
+  addMapPane(name = "polygons", zIndex = 410) %>% 
+  addMapPane(name = "IRC", zIndex = 420) %>%
+  addMapPane(name = "Urban Agr Collective", zIndex = 420) %>%
+  addMapPane(name = "City Schoolyard", zIndex = 420) %>%
+  addMapPane(name = "Lost gardens", zIndex = 420) %>%
+  addMapPane(name = "Parks Dep.", zIndex = 420) %>%
+  addMapPane(name = "Other", zIndex = 420) %>%
+  addProviderTiles("CartoDB.Positron") %>%
+  addPolygons(data = blkgr,
+              fillColor = ~pal(perc_snaphseE),
+              weight = 1,
+              opacity = 1,
+              color = "gray", 
+              fillOpacity = 0.6,
+              group = "polygons",
+              highlight = highlightOptions(
+                weight = 2,
+                fillOpacity = 0.8),
+              popup = paste0("GEOID: ", blkgr$GEOID, "<br>",
+                             "Percent SNAP households: ", blkgr$perc_snaphseE)) %>%
+  addPolylines(data = cville, color = "black", opacity = 1, weight = 3,group = "polygons") %>%
+  addLegend("bottomright", pal = pal, values = blkgr$perc_snaphseE, 
+            title = "Percent SNAP <br> households", opacity = 0.7) %>%
+  addCircles(data = gardendat[gardendat$cat == "IRC New Roots",],
+                   group = "IRC",
+                   color = "yellow", 
+                   radius = 8,
+                   fillOpacity = 0.75,
+                   opacity = 1, 
+                   popup = paste0("Location: ", gardendat[gardendat$Managed_by == "IRC New Roots",]$Garden_property_name, "<br>",
+                                  "Managed by: ", "IRC New Roots", "<br>",
+                                  "Size: ", gardendat[gardendat$Managed_by == "IRC New Roots",]$Total_size)) %>%
+    addCircles(data = gardendat[gardendat$cat == "Urban Agriculture Collective" & gardendat$Status == "Existing",],
+                   group = "Urban Agr Collective",
+                   color = "orange", 
+                   radius = 8,
+                   fillOpacity = 0.75,
+                   opacity = 1, 
+                   popup = paste0("Location: ", gardendat[gardendat$Managed_by == "Urban Agriculture Collective" & gardendat$Status == "Existing",]$Garden_property_name, "<br>",
+                                  "Managed by: ", "Urban Agriculture Collective", "<br>",
+                                  "Size: ", gardendat[gardendat$cat == "Urban Agriculture Collective" & gardendat$Status == "Existing",]$Total_size)) %>%
+      addCircles(data = gardendat[gardendat$cat == "City Schoolyard Garden",],
+                       group = "City Schoolyard",
+                   color = "purple", 
+                   radius = 8,
+                   fillOpacity = 0.75,
+                   opacity = 1, 
+                   popup = paste0("Location: ", gardendat[gardendat$Managed_by == "City Schoolyard Garden",]$Garden_property_name, "<br>",
+                                  "Managed by: ", "City Schoolyard", "<br>",
+                                  "Size: ", gardendat[gardendat$cat == "City Schoolyard Garden",]$Total_size)) %>%
+    addCircles(data = gardendat[gardendat$Status == "Lost",], group = "Lost gardens",
+                   color = "red", 
+                   radius = 8,
+                   fillOpacity = 0.75,
+                   opacity = 1, 
+                   popup = paste0("Location: ", gardendat[gardendat$Status == "Lost",]$Garden_property_name, "<br>",
+                                  "Managed by: ", "Urban Agriculture Collective", "<br>",
+                                  "Size: ", gardendat[gardendat$Status == "Lost",]$Total_size))%>% 
+  addCircles(data = gardendat[gardendat$cat == "Charlottesville Parks Department",],
+                   group = "Parks Dep.",
+                   color = "blue", 
+                   radius = 8,
+                   fillOpacity = 0.75,
+                   opacity = 1, 
+                   popup = paste0("Location: ", gardendat[gardendat$Managed_by == "Charlottesville Parks Department",]$Garden_property_name, "<br>",
+                                  "Managed by: ", "Charlottesville Parks Department", "<br>",
+                                  "Size: ", gardendat[gardendat$cat == "Charlottesville Parks Department",]$Total_size)) %>%
+    addCircles(data = gardendat[gardendat$cat == "Other",],
+                   group = "Other",
+                   color = "black", 
+                   radius = 8,
+                   fillOpacity = 0.75,
+                   opacity = 1, 
+                   popup = paste0("Location: ", gardendat[gardendat$cat == "Other",]$Garden_property_name, "<br>",
+                                  "Managed by: ", gardendat[gardendat$cat == "Other",]$Managed_by, "<br>",
+                                  "Size: ", gardendat[gardendat$cat == "Other",]$Total_size)) %>%
+      addLayersControl(
+        overlayGroups = c("IRC", "Urban Agr Collective", "City Schoolyard", "Lost gardens", "Parks Dep.", "Other"),
+        options = layersControlOptions(collapsed = TRUE), 
+        position = "bottomright"
+      )  %>%
+  addLegendCustom(colors = c("yellow", "orange", "purple", "blue", "black", "red"), 
+                  labels = c("IRC New Roots Charlottesville", "Urban Agriculture Collective", "City Schoolyard", "Charlottesville Parks Department", "Other", "Lost gardens"), sizes = rep(10, 6))
+
+```
+
+
+### Household income
+
+The American Community Survey measures income at the household level, capturing income in the last 12 months of all individuals 15 and older in the household. The median household income is the income threshold that divides households into two halves (half of the households fall below the value and half of the households fall above the value.)
+
+```{r}
+pal <- colorNumeric("Greys", domain = blkgr$hhincE)
+leaflet()%>%
+  addMapPane(name = "polygons", zIndex = 410) %>% 
+  addMapPane(name = "IRC", zIndex = 420) %>%
+  addMapPane(name = "Urban Agr Collective", zIndex = 420) %>%
+  addMapPane(name = "City Schoolyard", zIndex = 420) %>%
+  addMapPane(name = "Lost gardens", zIndex = 420) %>%
+  addMapPane(name = "Parks Dep.", zIndex = 420) %>%
+  addMapPane(name = "Other", zIndex = 420) %>%
+  addProviderTiles("CartoDB.Positron") %>%
+  addPolygons(data = blkgr,
+              fillColor = ~pal(hhincE),
+              weight = 1,
+              opacity = 1,
+              color = "gray", 
+              fillOpacity = 0.6,
+              group = "polygons",
+              highlight = highlightOptions(
+                weight = 2,
+                fillOpacity = 0.8),
+              popup = paste0("GEOID: ", blkgr$GEOID, "<br>",
+                             "Median household <br> income: ", blkgr$hhincE))%>% 
+  addPolylines(data = cville, color = "black", opacity = 1, weight = 3,group = "polygons") %>%
+  addLegend("bottomright", pal = pal, values = blkgr$hhincE, 
+            title = "Median household <br> income", opacity = 0.7) %>%
+  addCircles(data = gardendat[gardendat$cat == "IRC New Roots",],
+                   group = "IRC",
+                   color = "yellow", 
+                   radius = 8,
+                   fillOpacity = 1,
+                   opacity = 1, 
+                   popup = paste0("Location: ", gardendat[gardendat$Managed_by == "IRC New Roots",]$Garden_property_name, "<br>",
+                                  "Managed by: ", "IRC New Roots", "<br>",
+                                  "Size: ", gardendat[gardendat$Managed_by == "IRC New Roots",]$Total_size)) %>%
+    addCircles(data = gardendat[gardendat$cat == "Urban Agriculture Collective" & gardendat$Status == "Existing",],
+                   group = "Urban Agr Collective",
+                   color = "orange", 
+                   radius = 8,
+                   fillOpacity = 1,
+                   opacity = 1, 
+                   popup = paste0("Location: ", gardendat[gardendat$Managed_by == "Urban Agriculture Collective" & gardendat$Status == "Existing",]$Garden_property_name, "<br>",
+                                  "Managed by: ", "Urban Agriculture Collective", "<br>",
+                                  "Size: ", gardendat[gardendat$cat == "Urban Agriculture Collective" & gardendat$Status == "Existing",]$Total_size)) %>%
+      addCircles(data = gardendat[gardendat$cat == "City Schoolyard Garden",],
+                       group = "City Schoolyard",
+                   color = "purple", 
+                   radius = 8,
+                   fillOpacity = 1,
+                   opacity = 1, 
+                   popup = paste0("Location: ", gardendat[gardendat$Managed_by == "City Schoolyard Garden",]$Garden_property_name, "<br>",
+                                  "Managed by: ", "City Schoolyard", "<br>",
+                                  "Size: ", gardendat[gardendat$cat == "City Schoolyard Garden",]$Total_size)) %>%
+    addCircles(data = gardendat[gardendat$Status == "Lost",], group = "Lost gardens",
+                   color = "red", 
+                   radius = 8,
+                   fillOpacity = 1,
+                   opacity = 1, 
+                   popup = paste0("Location: ", gardendat[gardendat$Status == "Lost",]$Garden_property_name, "<br>",
+                                  "Managed by: ", "Urban Agriculture Collective", "<br>",
+                                  "Size: ", gardendat[gardendat$Status == "Lost",]$Total_size))%>% 
+  addCircles(data = gardendat[gardendat$cat == "Charlottesville Parks Department",],
+                   group = "Parks Dep.",
+                   color = "blue", 
+                   radius = 8,
+                   fillOpacity = 1,
+                   opacity = 1, 
+                   popup = paste0("Location: ", gardendat[gardendat$Managed_by == "Charlottesville Parks Department",]$Garden_property_name, "<br>",
+                                  "Managed by: ", "Charlottesville Parks Department", "<br>",
+                                  "Size: ", gardendat[gardendat$cat == "Charlottesville Parks Department",]$Total_size)) %>%
+    addCircles(data = gardendat[gardendat$cat == "Other",],
+                   group = "Other",
+                   color = "black", 
+                   radius = 8,
+                   fillOpacity = 1,
+                   opacity = 1, 
+                   popup = paste0("Location: ", gardendat[gardendat$cat == "Other",]$Garden_property_name, "<br>",
+                                  "Managed by: ", gardendat[gardendat$cat == "Other",]$Managed_by, "<br>",
+                                  "Size: ", gardendat[gardendat$cat == "Other",]$Total_size)) %>%
+      addLayersControl(
+        overlayGroups = c("IRC", "Urban Agr Collective", "City Schoolyard", "Lost gardens", "Parks Dep.", "Other"),
+        options = layersControlOptions(collapsed = TRUE), 
+        position = "bottomright"
+      ) %>%
+  addLegendCustom(colors = c("yellow", "orange", "purple", "blue", "black", "red"), 
+                  labels = c("IRC New Roots Charlottesville", "Urban Agriculture Collective", "City Schoolyard", "Charlottesville Parks Department", "Other", "Lost gardens"), sizes = rep(10, 6))
+
+```
+
+### Poverty rate
+
+The percent of individuals in poverty is determined by comparing a family's total income to an income threshold that varies by family size and composition. For example, in 2018, the poverty threshold for a family with two adults and two children was $25,465. If a family's income is less than the family's poverty threshold, then every member of that family is designated as an individual living in poverty. The perccent of individuals in poverty is only available at the census tract level. 
+
+```{r}
+pal <- colorNumeric("Greys", domain = tract$povrateE)
+leaflet()%>%
+  addMapPane(name = "polygons", zIndex = 410) %>% 
+  addMapPane(name = "IRC", zIndex = 420) %>%
+  addMapPane(name = "Urban Agr Collective", zIndex = 420) %>%
+  addMapPane(name = "City Schoolyard", zIndex = 420) %>%
+  addMapPane(name = "Lost gardens", zIndex = 420) %>%
+  addMapPane(name = "Parks Dep.", zIndex = 420) %>%
+  addMapPane(name = "Other", zIndex = 420) %>%
+  addProviderTiles("CartoDB.Positron") %>%
+  addPolygons(data = tract,
+              fillColor = ~pal(povrateE),
+              weight = 1,
+              opacity = 1,
+              color = "gray", 
+              fillOpacity = 0.6,
+              group = "polygons",
+              highlight = highlightOptions(
+                weight = 2,
+                fillOpacity = 0.8),
+              popup = paste0("GEOID: ", tract$GEOID, "<br>",
+                             "Poverty rate: ", tract$povrateE))%>% 
+  addPolylines(data = cville, color = "black", opacity = 1, weight = 3,group = "polygons") %>%
+  addLegend("bottomright", pal = pal, values = tract$povrateE, 
+            title = "Poverty rate", opacity = 0.7) %>%
+  addCircles(data = gardendat[gardendat$cat == "IRC New Roots",],
+                   group = "IRC",
+                   color = "yellow", 
+                   radius = 8,
+                   fillOpacity = 1,
+                   opacity = 1, 
+                   popup = paste0("Location: ", gardendat[gardendat$Managed_by == "IRC New Roots",]$Garden_property_name, "<br>",
+                                  "Managed by: ", "IRC New Roots", "<br>",
+                                  "Size: ", gardendat[gardendat$Managed_by == "IRC New Roots",]$Total_size)) %>%
+    addCircles(data = gardendat[gardendat$cat == "Urban Agriculture Collective" & gardendat$Status == "Existing",],
+                   group = "Urban Agr Collective",
+                   color = "orange", 
+                   radius = 8,
+                   fillOpacity = 1,
+                   opacity = 1, 
+                   popup = paste0("Location: ", gardendat[gardendat$Managed_by == "Urban Agriculture Collective" & gardendat$Status == "Existing",]$Garden_property_name, "<br>",
+                                  "Managed by: ", "Urban Agriculture Collective", "<br>",
+                                  "Size: ", gardendat[gardendat$cat == "Urban Agriculture Collective" & gardendat$Status == "Existing",]$Total_size)) %>%
+      addCircles(data = gardendat[gardendat$cat == "City Schoolyard Garden",],
+                       group = "City Schoolyard",
+                   color = "purple", 
+                   radius = 8,
+                   fillOpacity = 1,
+                   opacity = 1, 
+                   popup = paste0("Location: ", gardendat[gardendat$Managed_by == "City Schoolyard Garden",]$Garden_property_name, "<br>",
+                                  "Managed by: ", "City Schoolyard", "<br>",
+                                  "Size: ", gardendat[gardendat$cat == "City Schoolyard Garden",]$Total_size)) %>%
+    addCircles(data = gardendat[gardendat$Status == "Lost",], group = "Lost gardens",
+                   color = "red", 
+                   radius = 8,
+                   fillOpacity = 1,
+                   opacity = 1, 
+                   popup = paste0("Location: ", gardendat[gardendat$Status == "Lost",]$Garden_property_name, "<br>",
+                                  "Managed by: ", "Urban Agriculture Collective", "<br>",
+                                  "Size: ", gardendat[gardendat$Status == "Lost",]$Total_size))%>% 
+  addCircles(data = gardendat[gardendat$cat == "Charlottesville Parks Department",],
+                   group = "Parks Dep.",
+                   color = "blue", 
+                   radius = 8,
+                   fillOpacity = 1,
+                   opacity = 1, 
+                   popup = paste0("Location: ", gardendat[gardendat$Managed_by == "Charlottesville Parks Department",]$Garden_property_name, "<br>",
+                                  "Managed by: ", "Charlottesville Parks Department", "<br>",
+                                  "Size: ", gardendat[gardendat$cat == "Charlottesville Parks Department",]$Total_size)) %>%
+    addCircles(data = gardendat[gardendat$cat == "Other",],
+                   group = "Other",
+                   color = "black", 
+                   radius = 8,
+                   fillOpacity = 1,
+                   opacity = 1, 
+                   popup = paste0("Location: ", gardendat[gardendat$cat == "Other",]$Garden_property_name, "<br>",
+                                  "Managed by: ", gardendat[gardendat$cat == "Other",]$Managed_by, "<br>",
+                                  "Size: ", gardendat[gardendat$cat == "Other",]$Total_size)) %>%
+      addLayersControl(
+        overlayGroups = c("IRC", "Urban Agr Collective", "City Schoolyard", "Lost gardens", "Parks Dep.", "Other"),
+        options = layersControlOptions(collapsed = TRUE), 
+        position = "bottomright"
+      ) %>%
+  addLegendCustom(colors = c("yellow", "orange", "purple", "blue", "black", "red"), 
+                  labels = c("IRC New Roots Charlottesville", "Urban Agriculture Collective", "City Schoolyard", "Charlottesville Parks Department", "Other", "Lost gardens"), sizes = rep(10, 6))
+
+```
+
+### Foreign-born residents
+
+The American Community Survey measures the number of foreign-born residents at the individual level. Here we show the estimated percent of foreign-born residents--calculated by dividing the number of foreign-born residents by the total population. The number of foreign-born residents is only available at the census tract level. 
+
+```{r}
+pal <- colorNumeric("Greys", domain = tract$perc_forbE)
+leaflet()%>%
+  addMapPane(name = "polygons", zIndex = 410) %>% 
+  addMapPane(name = "IRC", zIndex = 420) %>%
+  addMapPane(name = "Urban Agr Collective", zIndex = 420) %>%
+  addMapPane(name = "City Schoolyard", zIndex = 420) %>%
+  addMapPane(name = "Lost gardens", zIndex = 420) %>%
+  addMapPane(name = "Parks Dep.", zIndex = 420) %>%
+  addMapPane(name = "Other", zIndex = 420) %>%
+  addProviderTiles("CartoDB.Positron") %>%
+  addPolygons(data = tract,
+              fillColor = ~pal(perc_forbE),
+              weight = 1,
+              opacity = 1,
+              color = "gray", 
+              fillOpacity = 0.6,
+              group = "polygons",
+              highlight = highlightOptions(
+                weight = 2,
+                fillOpacity = 0.8),
+              popup = paste0("GEOID: ", tract$GEOID, "<br>",
+                             "Percent foreign born: ", tract$perc_forbE))%>% 
+  addPolylines(data = cville, color = "black", opacity = 1, weight = 3,group = "polygons") %>%
+  addLegend("bottomright", pal = pal, values = tract$perc_forbE, 
+            title = "Percent Foreign- <br>born residents", opacity = 0.7) %>%
+  addCircles(data = gardendat[gardendat$cat == "IRC New Roots",],
+                   group = "IRC",
+                   color = "yellow", 
+                   radius = 8,
+                   fillOpacity = 1,
+                   opacity = 1, 
+                   popup = paste0("Location: ", gardendat[gardendat$Managed_by == "IRC New Roots",]$Garden_property_name, "<br>",
+                                  "Managed by: ", "IRC New Roots", "<br>",
+                                  "Size: ", gardendat[gardendat$Managed_by == "IRC New Roots",]$Total_size)) %>%
+    addCircles(data = gardendat[gardendat$cat == "Urban Agriculture Collective" & gardendat$Status == "Existing",],
+                   group = "Urban Agr Collective",
+                   color = "orange", 
+                   radius = 8,
+                   fillOpacity = 1,
+                   opacity = 1, 
+                   popup = paste0("Location: ", gardendat[gardendat$Managed_by == "Urban Agriculture Collective" & gardendat$Status == "Existing",]$Garden_property_name, "<br>",
+                                  "Managed by: ", "Urban Agriculture Collective", "<br>",
+                                  "Size: ", gardendat[gardendat$cat == "Urban Agriculture Collective" & gardendat$Status == "Existing",]$Total_size)) %>%
+      addCircles(data = gardendat[gardendat$cat == "City Schoolyard Garden",],
+                       group = "City Schoolyard",
+                   color = "purple", 
+                   radius = 8,
+                   fillOpacity = 1,
+                   opacity = 1, 
+                   popup = paste0("Location: ", gardendat[gardendat$Managed_by == "City Schoolyard Garden",]$Garden_property_name, "<br>",
+                                  "Managed by: ", "City Schoolyard", "<br>",
+                                  "Size: ", gardendat[gardendat$cat == "City Schoolyard Garden",]$Total_size)) %>%
+    addCircles(data = gardendat[gardendat$Status == "Lost",], group = "Lost gardens",
+                   color = "red", 
+                   radius = 8,
+                   fillOpacity = 1,
+                   opacity = 1, 
+                   popup = paste0("Location: ", gardendat[gardendat$Status == "Lost",]$Garden_property_name, "<br>",
+                                  "Managed by: ", "Urban Agriculture Collective", "<br>",
+                                  "Size: ", gardendat[gardendat$Status == "Lost",]$Total_size))%>% 
+  addCircles(data = gardendat[gardendat$cat == "Charlottesville Parks Department",],
+                   group = "Parks Dep.",
+                   color = "blue", 
+                   radius = 8,
+                   fillOpacity = 1,
+                   opacity = 1, 
+                   popup = paste0("Location: ", gardendat[gardendat$Managed_by == "Charlottesville Parks Department",]$Garden_property_name, "<br>",
+                                  "Managed by: ", "Charlottesville Parks Department", "<br>",
+                                  "Size: ", gardendat[gardendat$cat == "Charlottesville Parks Department",]$Total_size)) %>%
+    addCircles(data = gardendat[gardendat$cat == "Other",],
+                   group = "Other",
+                   color = "black", 
+                   radius = 8,
+                   fillOpacity = 1,
+                   opacity = 1, 
+                   popup = paste0("Location: ", gardendat[gardendat$cat == "Other",]$Garden_property_name, "<br>",
+                                  "Managed by: ", gardendat[gardendat$cat == "Other",]$Managed_by, "<br>",
+                                  "Size: ", gardendat[gardendat$cat == "Other",]$Total_size)) %>%
+      addLayersControl(
+        overlayGroups = c("IRC", "Urban Agr Collective", "City Schoolyard", "Lost gardens", "Parks Dep.", "Other"),
+        options = layersControlOptions(collapsed = TRUE), 
+        position = "bottomright"
+      ) %>%
+  addLegendCustom(colors = c("yellow", "orange", "purple", "blue", "black", "red"), 
+                  labels = c("IRC New Roots Charlottesville", "Urban Agriculture Collective", "City Schoolyard", "Charlottesville Parks Department", "Other", "Lost gardens"), sizes = rep(10, 6))
+
+```
+
+
+## Garden Information
+
+* __IRC New Roots Charlottesville__: The International Rescue Committee's (IRC) New Roots Charlottesville initiative works with refugees and New Americans in support of their health, community connections and household economics through agriculture and food initiatives. New Roots currently supports 85 community gardeners cultivating a total of four acres throughout Charlottesville and Albemarle County. Learn more [here](https://www.rescue.org/announcement/new-roots-charlottesville). 
+
+* __City Schoolyard Gardens__: Cultivate Charlottesville's City Schoolyard Garden program partners with Charlottesville City Schools (CCS) to connect youth with how their food is grown. It engages over 4,000 CCS students each year with over 35,000 student interactions in the gardens. These interactions enhance academic learning, cultivate healthy living skills, and build leadership skills at all grade levels. Learn more [here](https://cultivatecharlottesville.org/what-is-food-equity/city-schoolyard-garden/). 
+
+* __Urban Agriculture Collective__: Cultivate Charlottesville's Urban Agriculture Collective (UAC) program builds food equity by working with public housing residents to grow fresh healthy food. At its height, UAC grew as much as 17,000 pounds of produce per year, which is shared, at no cost, with hundreds of local families experiencing food insecurity. Recently downsized due to development pressure, UAC is working with residents and partners to identify new land on which to grow and build food equity in the community. Learn more [here](https://cultivatecharlottesville.org/what-is-food-equity/urban-agriculture-collective/). 
+
+* __Charlottesville Parks & Recreation Gardens__: Charlottesville Parks & Recreation offers garden plots for rental to City and non-City residents. Learn more [here](https://www.charlottesville.gov/1487/Garden-Plots). 
+
+* __Other Gardens__: The other gardens included on the map are community gardens sponsored by specific institutions, such as churches. 
+
+* __Lost Gardens__: The Lost Gardens represent garden spaces previously managed by the UAC program that have been lost due to new development. As noted, UAC is working with residents and partners to identify new land on which to grow and build food equity in the community. Learn more [here](https://cultivatecharlottesville.org/what-is-food-equity/urban-agriculture-collective/). 
